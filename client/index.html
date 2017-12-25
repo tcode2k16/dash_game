@@ -15,9 +15,10 @@ html, body {
 }
 
 #main {
-  width: 80vw;
+  /* width: 80vw; */
+  justify-self: center;
   max-height: 100vh;
-  object-fit: cover;
+  /* object-fit: cover; */
   /* height: 100vh; */
 }
 
@@ -26,7 +27,7 @@ html, body {
   height: 100vh;
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between;
   align-items: flex-end;
 }
 
@@ -45,6 +46,17 @@ html, body {
     <canvas id="main"></canvas>
     <div class="info">
       <p>Cooldown: <b id="cooldownEl">3</b></p>
+      <p>room: <input id="roomEl" type="text" value="room1"></p>
+      <div>
+        <p>type:
+          <select id="typeEl">
+            <option value="TRIANGLE">TRIANGLE</option>
+            <option value="SQUARE">SQUARE</option>
+            <option value="CIRCLE">CIRCLE</option>
+          </select>
+        </p>
+      </div>
+      <button id="joinEl">join</button>
     </div>
   </div>
   

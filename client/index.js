@@ -58,13 +58,17 @@ function main() {
   c.height = 1000;
   ctx = c.getContext('2d');
 
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.font="50px Georgia";
+  ctx.fillText("Join a room", c.width/2-100, c.height/2-25);
+
   primus = Primus.connect('ws://192.168.1.2:8080');
   
-  primus.emit('joinGame', { room: 'test', type: types.TRIANGLE });
+  
   
   primus.on('update', function (data) {
     if (!data) return;
-    
+
     if (data.cooldown !== state.cooldown) cooldownEl.innerHTML = data.cooldown+'';
     state = data;
     ctx.clearRect(0, 0, c.width, c.height);
@@ -86,5 +90,9 @@ function main() {
   Mousetrap.bind('shift+w', _ => primus.emit('makeMove', { move: moves.DASH, direction: moves.UP }));
   Mousetrap.bind('shift+d', _ => primus.emit('makeMove', { move: moves.DASH, direction: moves.RIGHT }));
   Mousetrap.bind('shift+s', _ => primus.emit('makeMove', { move: moves.DASH, direction: moves.DOWN }));
-
+  joinEl.onclick = _ => {
+    primus.end();
+    primus.open();
+    primus.emit('joinGame', { room: roomEl.value, type: types[typeEl.value] });
+  }
 }
