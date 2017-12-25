@@ -1,6 +1,6 @@
 import maps from './maps.json';
 import { pickInt } from './util';
-import { types, row, col, moves, fps } from './config';
+import { types, moves, fps, maxOffset, dOffset } from './config';
 
 const game = {
   db: {
@@ -35,22 +35,25 @@ const game = {
   newRoom(room) {
     if (this.db.rooms[room]) return;
 
-    let map = maps[pickInt(0, maps.length)];
+    // let map = maps[pickInt(0, maps.length)];
+    let map = maps[2];
     let walls = map.reduce((p, row, y) => {
       let r = row.reduce((c, e, x) => {
         if (e !== 1) return c;
-        return [...c, {
+        return [...c, this.newEntity({
           x,
           y,
           type: types.WALL
-        }]
+        })]
       },[]);
       return [...p, ...r];
     },[]);
 
     this.db.rooms[room] = {
       players: {},
-      entities: [...walls]
+      entities: [...walls],
+      height: map.length,
+      width: map[0].length
     };
   },
 
@@ -58,16 +61,16 @@ const game = {
     let rx, ry;
 
     do {
-      rx = pickInt(0, row);
-      ry = pickInt(0, col);
+      rx = pickInt(0, this.db.rooms[room].width);
+      ry = pickInt(0, this.db.rooms[room].height);
     } while (!this.freeSpace(this.db.rooms[room], { x: rx, y: ry }));
 
-    this.db.rooms[room].players[id] = {
+    this.db.rooms[room].players[id] = this.newEntity({
       x: rx,
       y: ry,
       hidden: true,
       type
-    };
+    });
     
     this.db.players[id] = room;
 
@@ -75,8 +78,8 @@ const game = {
 
   freeSpace(room, { x, y }) {
     let entities = [...room.entities, ...Object.keys(room.players).map(k => room.players[k])]
-    if (x < 0 || x >= row ||
-        y < 0 || y >= col) {
+    if (x < 0 || x >= room.width ||
+        y < 0 || y >= room.height) {
           return false;
     }
 
@@ -139,12 +142,12 @@ const game = {
 
     for (let rx = xMin; rx <= xMax; rx++)
       for (let ry = yMin; ry <= yMax; ry++)
-        room.entities.push({
+        room.entities.push(this.newEntity({
           x: rx,
           y: ry,
           type: types.TRACE,
           lifetime: 0.5 * fps * (1/((Math.abs(x-rx)+1)*(Math.abs(y-ry)+1)))
-        });
+        }));
   },
 
   dashMove(room, { x: px, y: py, direction, id }) {
@@ -181,22 +184,63 @@ const game = {
     return { x, y };
   },
 
+  updateLifetime(p, e) {
+    if (e.lifetime === undefined || e.lifetime === null) return [...p, e];
+
+    if (e.lifetime <= 0) return p;
+
+    return [...p, {
+      ...e,
+      lifetime: e.lifetime -1
+    }];
+  },
+
+  updateOffset(p, e) {
+    if (e.offset === undefined || e.offset === null) return [...p, e];
+
+    let sign = e.offset.sign;
+    let dx = dOffset * e.offset.sign;
+
+    if (e.offset.x <= 0) sign = 1;
+    else if (e.offset.x > maxOffset) sign = -1;
+
+    return [...p, {
+      ...e,
+      offset: {
+        sign,
+        x: e.offset.x+dx
+      }
+    }];
+  },
+
   update() {
     Object.keys(this.db.rooms).forEach(key => {
-      let entities = this.db.rooms[key].entities;
-      this.db.rooms[key].entities = entities.reduce((p, e) => {
-        
-        if (e.lifetime === undefined || e.lifetime === null) return [...p, e];
+      this.db.rooms[key].entities = this.db.rooms[key].entities
+                                      .reduce(this.updateLifetime, [])
+                                      .reduce(this.updateOffset, []);
+      
+      let playerIds = Object.keys(this.db.rooms[key].players);
+      this.db.rooms[key].players = playerIds
+                                      .map(e => this.db.rooms[key].players[e])
+                                      .reduce(this.updateLifetime, [])
+                                      .reduce(this.updateOffset, [])
+                                      .reduce((p, e, i) => {
+                                        return {
+                                          ...p,
+                                          [playerIds[i]]: e
+                                        };
+                                      }, {});
 
-        if (e.lifetime <= 0) return p;
-
-        return [...p, {
-          ...e,
-          lifetime: e.lifetime -1
-        }];
-
-      }, []);
     });
+  },
+
+  newEntity({ x, y, hidden, type, offset = {
+    x: pickInt(0, maxOffset),
+    sign: 1
+  }, lifetime }) {
+    return {
+      x, y, hidden, type, offset, lifetime
+    };
   }
 }
 
@@ -216,7 +260,9 @@ export default game
 
 // room: {
 //   players: {},
-//   entities: []
+//   entities: [],
+//   width,
+//   height
 // }
 
 // entities: {
@@ -224,5 +270,6 @@ export default game
 //   y,
 //   type,
 //   hidden,
-//   lifetime
+//   lifetime,
+//   offset
 // }

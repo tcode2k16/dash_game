@@ -15,6 +15,6 @@ module.exports = {
     RIGHT: 4,
     DASH: 5
   },
-  row: 6,
-  col: 5
+  maxOffset: 5,
+  dOffset: 0.05
 }

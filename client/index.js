@@ -27,18 +27,19 @@ let c, ctx;
 let type = types.TRIANGLE;
 
 function draw(e) {
+  let o = e.offset.x;
   switch(e.type) {
     case types.WALL:
       ctx.fillStyle = '#2c3e50';
-      ctx.fillRect(e.x*cellWidth, e.y*cellWidth, cellWidth, cellWidth);
+      ctx.fillRect(e.x*cellWidth+o, e.y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
       break;
     case types.HEXAGON:
       ctx.fillStyle = '#3498db';
-      ctx.fillRect(e.x*cellWidth, e.y*cellWidth, cellWidth, cellWidth);
+      ctx.fillRect(e.x*cellWidth+o, e.y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
       break;
     case types.TRIANGLE:
       ctx.fillStyle = '#f1c40f';
-      ctx.fillRect(e.x*cellWidth, e.y*cellWidth, cellWidth, cellWidth);
+      ctx.fillRect(e.x*cellWidth+o, e.y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
       break;
     case types.TRACE:
       ctx.fillStyle = '#f1c40f';
@@ -52,8 +53,8 @@ function draw(e) {
 
 function main() {
   c = document.getElementById('main');
-  c.width = 600;
-  c.height = 500;
+  c.width = 1200;
+  c.height = 1000;
   ctx = c.getContext('2d');
 
   primus = Primus.connect('ws://192.168.1.2:8080');
