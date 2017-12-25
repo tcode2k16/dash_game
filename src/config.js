@@ -8,6 +8,14 @@ module.exports = {
     CIRCLE: 5,
     TRACE: 6
   },
+  typeCooldown: [
+    0,
+    0,
+    3,
+    3,
+    3,
+    0
+  ],
   moves: {
     UP: 1,
     DOWN: 2,

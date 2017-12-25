@@ -1,6 +1,6 @@
 import maps from './maps.json';
-import { pickInt } from './util';
-import { types, moves, fps, maxOffset, dOffset } from './config';
+import { pickInt, isBetween } from './util';
+import { types, moves, fps, maxOffset, dOffset, typeCooldown } from './config';
 
 const game = {
   db: {
@@ -17,7 +17,10 @@ const game = {
       if (e.hidden) e.type = types.HEXAGON;
       return e;
     });
-    return [...room.entities, ...players];
+    return {
+      cooldown: room.players[id].cooldown,
+      entities: [...room.entities, ...players]
+    };
   },
 
   joinGame(id, { room, type }) { 
@@ -76,10 +79,13 @@ const game = {
 
   },
 
+  inBound(room, { x, y }) {
+    return !(x < 0 || x >= room.width || y < 0 || y >= room.height);
+  },
+
   freeSpace(room, { x, y }) {
     let entities = [...room.entities, ...Object.keys(room.players).map(k => room.players[k])]
-    if (x < 0 || x >= room.width ||
-        y < 0 || y >= room.height) {
+    if (!this.inBound(room, { x, y })) {
           return false;
     }
 
@@ -103,7 +109,7 @@ const game = {
   makeMove(id, { move, direction }) {
     if (!this.db.players[id]) return;
     let room = this.db.rooms[this.db.players[id]];
-    let { x, y, type, hidden } = room.players[id];
+    let { x, y, type, hidden, cooldown } = room.players[id];
     let px = x, py = y;
 
     switch (move) {
@@ -120,19 +126,22 @@ const game = {
         x++;
         break;
       case moves.DASH:
-        if (type !== types.TRIANGLE) return;
-        let r = this.dashMove(room, { x, y, direction, id });
+        let r = this.dashMove(room, { x, y, direction, id, type, cooldown });
         if (r.err) return;
         x = r.x;
         y = r.y;
         break;
       default: break;
     }
-    if (!this.freeSpace(room, { x, y })) return;
+    if (!this.inBound(room, { x, y })) return;
+    this.killPlayers(room, { px, py, x, y, id});
     
+    if (!this.freeSpace(room, { x, y })) return;
+
     room.players[id] = {
       ...room.players[id],
-      x, y
+      x, y,
+      cooldown: room.players[id].cooldown === 0 ? 0 : room.players[id].cooldown - 1
     };
     
     let xMax = Math.max(px, x);
@@ -150,8 +159,28 @@ const game = {
         }));
   },
 
-  dashMove(room, { x: px, y: py, direction, id }) {
-    if (direction === undefined || !this.db.players[id] || !room) return { err: true };
+  killPlayers(room, { px, py, x, y, id }) {
+
+    let xMax = Math.max(px, x);
+    let xMin = Math.min(px, x);
+    let yMax = Math.max(py, y);
+    let yMin = Math.min(py, y);
+
+    let targets = Object.keys(room.players).reduce((p, e) => {
+      let x = room.players[e].x;
+      let y = room.players[e].y;
+      if (!(isBetween(x, xMin, xMax) && isBetween(y, yMin, yMax)) || e === id) return p;
+      return [...p, e];
+    }, []);
+
+
+    targets.forEach(this.leaveGame.bind(this));
+
+  },
+
+  dashMove(room, { x: px, y: py, direction, id, type, cooldown }) {
+    if (direction === undefined || !this.db.players[id] || !room ||
+        type !== types.TRIANGLE || cooldown !== 0) return { err: true };
     
     let rx = px, ry = py;
     let x, y;
@@ -175,11 +204,14 @@ const game = {
           break;
         default: break;
       }
+      if (this.inBound(room, { x: rx, y: ry })) this.killPlayers(room, { px, py, x: rx, y: ry, id });
     } while (this.freeSpace(room, { x: rx, y: ry }));
 
     
 
-    if ((x !== px || y !== py) && player.hidden) room.players[id].hidden = false;
+    if ((x !== px || y !== py) && player.hidden) player.hidden = false;
+    
+    player.cooldown = typeCooldown[type] + 1;
 
     return { x, y };
   },
@@ -237,9 +269,10 @@ const game = {
   newEntity({ x, y, hidden, type, offset = {
     x: pickInt(0, maxOffset),
     sign: 1
-  }, lifetime }) {
+  }, lifetime, cooldown }) {
+    cooldown = typeCooldown[type];
     return {
-      x, y, hidden, type, offset, lifetime
+      x, y, hidden, type, offset, lifetime, cooldown
     };
   }
 }

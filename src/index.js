@@ -18,7 +18,10 @@ const primus = new Primus(server, { transformer: 'uws' });
 primus.plugin('emit', require('primus-emit'));
 
 primus.on('connection', function connection(spark) {
-  spark.on('joinGame', args => G.joinGame(spark.id, args));
+  spark.on('joinGame', args => {
+    spark.joined = true;
+    G.joinGame(spark.id, args)
+  });
   spark.on('end', _ => G.leaveGame(spark.id));
   spark.on('makeMove', args => G.makeMove(spark.id, args));
 });
@@ -27,6 +30,8 @@ primus.on('connection', function connection(spark) {
 
 setInterval(_ => {
   primus.forEach(function (spark, next) {
+    if (spark.joined && G.db.players[spark.id] === undefined) spark.end();
+
     spark.emit('update', G.getState(spark.id));
     G.update();
     next();

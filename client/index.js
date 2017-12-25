@@ -25,6 +25,7 @@ const cellWidth = 100;
 let primus;
 let c, ctx;
 let type = types.TRIANGLE;
+let state = {};
 
 function draw(e) {
   let o = e.offset.x;
@@ -61,12 +62,20 @@ function main() {
   
   primus.emit('joinGame', { room: 'test', type: types.TRIANGLE });
   
-  primus.on('update', function (entities) {
-    if (!entities) return;
-    // console.log(entities);
+  primus.on('update', function (data) {
+    if (!data) return;
+    
+    if (data.cooldown !== state.cooldown) cooldownEl.innerHTML = data.cooldown+'';
+    state = data;
     ctx.clearRect(0, 0, c.width, c.height);
-    entities.forEach(draw);
+    state.entities.forEach(draw);
   });
+
+  primus.on('end', _ => {
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.font="50px Georgia";
+    ctx.fillText("You are dead!!!", c.width/2-100, c.height/2-25);
+  })
 
   Mousetrap.bind('a', _ => primus.emit('makeMove', { move: moves.LEFT }));
   Mousetrap.bind('w', _ => primus.emit('makeMove', { move: moves.UP }));
