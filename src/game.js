@@ -111,6 +111,7 @@ const game = {
     let room = this.db.rooms[this.db.players[id]];
     let { x, y, type, hidden, cooldown } = room.players[id];
     let px = x, py = y;
+    let r;
 
     switch (move) {
       case moves.DOWN:
@@ -126,7 +127,13 @@ const game = {
         x++;
         break;
       case moves.DASH:
-        let r = this.dashMove(room, { x, y, direction, id, type, cooldown });
+        r = this.dashMove(room, { x, y, direction, id, type, cooldown });
+        if (r.err) return;
+        x = r.x;
+        y = r.y;
+        break;
+      case moves.PASSWALL:
+        r = this.passwallMove(room, { x, y, direction, id, type, cooldown });
         if (r.err) return;
         x = r.x;
         y = r.y;
@@ -176,6 +183,59 @@ const game = {
 
     targets.forEach(this.leaveGame.bind(this));
 
+  },
+
+  passwallMove(room, { x: px, y: py, direction, id, type, cooldown }) {
+    console.log('called');
+    if (direction === undefined || !this.db.players[id] || !room ||
+      type !== types.SQUARE || cooldown !== 0) return { err: true };
+    
+    let x = px, y = py;
+    let player = room.players[id];
+
+    switch (direction) {
+      case moves.DOWN:
+        y++;
+        break;
+      case moves.UP:
+        y--;
+        break;
+      case moves.LEFT:
+        x--;
+        break;
+      case moves.RIGHT:
+        x++;
+        break;
+      default: break;
+    }
+    if (!(this.inBound(room, { x, y }) && !this.freeSpace(room, { x, y }))) return { err: true };
+    switch (direction) {
+      case moves.DOWN:
+        y++;
+        break;
+      case moves.UP:
+        y--;
+        break;
+      case moves.LEFT:
+        x--;
+        break;
+      case moves.RIGHT:
+        x++;
+        break;
+      default: break;
+    }
+    if (!this.inBound(room, { x, y })) return { err: true };
+    this.killPlayers(room, { px, py, x: x, y: y, id });
+    
+    if (!this.freeSpace(room, { x, y })) return { err: true };
+
+    
+
+    if ((x !== px || y !== py) && player.hidden) player.hidden = false;
+    
+    player.cooldown = typeCooldown[type] + 1;
+
+    return { x, y };
   },
 
   dashMove(room, { x: px, y: py, direction, id, type, cooldown }) {

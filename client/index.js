@@ -16,15 +16,27 @@ const moves = {
   DOWN: 2,
   LEFT: 3,
   RIGHT: 4,
-  DASH: 5
+  DASH: 5,
+  PASSWALL: 6
 };
+
+const specialMoves = [
+  null,
+  null,
+  null,
+  moves.DASH,
+  moves.PASSWALL,
+  null,
+  null
+];
+
 const fps = 60;
 
 const cellWidth = 100;
 
 let primus;
 let c, ctx;
-let type = types.TRIANGLE;
+let type, specialMove;
 let state = {};
 
 function draw(e) {
@@ -40,6 +52,10 @@ function draw(e) {
       break;
     case types.TRIANGLE:
       ctx.fillStyle = '#f1c40f';
+      ctx.fillRect(e.x*cellWidth+o, e.y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
+      break;
+    case types.SQUARE:
+      ctx.fillStyle = '#e67e22';
       ctx.fillRect(e.x*cellWidth+o, e.y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
       break;
     case types.TRACE:
@@ -86,13 +102,15 @@ function main() {
   Mousetrap.bind('d', _ => primus.emit('makeMove', { move: moves.RIGHT }));
   Mousetrap.bind('s', _ => primus.emit('makeMove', { move: moves.DOWN }));
 
-  Mousetrap.bind('shift+a', _ => primus.emit('makeMove', { move: moves.DASH, direction: moves.LEFT }));
-  Mousetrap.bind('shift+w', _ => primus.emit('makeMove', { move: moves.DASH, direction: moves.UP }));
-  Mousetrap.bind('shift+d', _ => primus.emit('makeMove', { move: moves.DASH, direction: moves.RIGHT }));
-  Mousetrap.bind('shift+s', _ => primus.emit('makeMove', { move: moves.DASH, direction: moves.DOWN }));
+  Mousetrap.bind('shift+a', _ => primus.emit('makeMove', { move: specialMove, direction: moves.LEFT }));
+  Mousetrap.bind('shift+w', _ => primus.emit('makeMove', { move: specialMove, direction: moves.UP }));
+  Mousetrap.bind('shift+d', _ => primus.emit('makeMove', { move: specialMove, direction: moves.RIGHT }));
+  Mousetrap.bind('shift+s', _ => primus.emit('makeMove', { move: specialMove, direction: moves.DOWN }));
   joinEl.onclick = _ => {
     primus.end();
     primus.open();
     primus.emit('joinGame', { room: roomEl.value, type: types[typeEl.value] });
+    type = types[typeEl.value];
+    specialMove = specialMoves[type];
   }
 }

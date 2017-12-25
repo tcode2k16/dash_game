@@ -11,7 +11,8 @@ module.exports = {
   typeCooldown: [
     0,
     0,
-    3,
+    0,
+    5,
     3,
     3,
     0
@@ -21,7 +22,8 @@ module.exports = {
     DOWN: 2,
     LEFT: 3,
     RIGHT: 4,
-    DASH: 5
+    DASH: 5,
+    PASSWALL: 6
   },
   maxOffset: 5,
   dOffset: 0.05
