@@ -12,9 +12,9 @@ module.exports = {
     0,
     0,
     0,
-    5,
+    10,
     3,
-    3,
+    0,
     0
   ],
   moves: {
@@ -23,8 +23,10 @@ module.exports = {
     LEFT: 3,
     RIGHT: 4,
     DASH: 5,
-    PASSWALL: 6
+    PASSWALL: 6,
+    BLOCK: 7
   },
   maxOffset: 5,
-  dOffset: 0.05
+  dOffset: 0.05,
+  blockLifetime: 20
 }

@@ -1,6 +1,6 @@
 import maps from './maps.json';
 import { pickInt, isBetween } from './util';
-import { types, moves, fps, maxOffset, dOffset, typeCooldown } from './config';
+import { types, moves, fps, maxOffset, dOffset, typeCooldown, blockLifetime } from './config';
 
 const game = {
   db: {
@@ -19,6 +19,7 @@ const game = {
     });
     return {
       cooldown: room.players[id].cooldown,
+      hidden: room.players[id].hidden,
       entities: [...room.entities, ...players]
     };
   },
@@ -138,13 +139,19 @@ const game = {
         x = r.x;
         y = r.y;
         break;
+      case moves.BLOCK:
+        r = this.blockMove(room, { x, y, direction, id, type, cooldown });
+        if (r.err) return;
+        x = r.x;
+        y = r.y;
+        break;
       default: break;
     }
     if (!this.inBound(room, { x, y })) return;
     this.killPlayers(room, { px, py, x, y, id});
     
     if (!this.freeSpace(room, { x, y })) return;
-
+    
     room.players[id] = {
       ...room.players[id],
       x, y,
@@ -158,12 +165,13 @@ const game = {
 
     for (let rx = xMin; rx <= xMax; rx++)
       for (let ry = yMin; ry <= yMax; ry++)
-        room.entities.push(this.newEntity({
-          x: rx,
-          y: ry,
-          type: types.TRACE,
-          lifetime: 0.5 * fps * (1/((Math.abs(x-rx)+1)*(Math.abs(y-ry)+1)))
-        }));
+        if (ry !== y || rx !== x)
+          room.entities.push(this.newEntity({
+            x: rx,
+            y: ry,
+            type: types.TRACE,
+            lifetime: 0.5 * fps * (1/((Math.abs(x-rx)+1)*(Math.abs(y-ry)+1)))
+          }));
   },
 
   killPlayers(room, { px, py, x, y, id }) {
@@ -185,8 +193,52 @@ const game = {
 
   },
 
+  blockMove(room, { x: px, y: py, direction, id, type, cooldown }) {
+    if (direction === undefined || !this.db.players[id] || !room ||
+      type !== types.CIRCLE || cooldown !== 0) return { err: true };
+    
+    let x = px, y = py;
+    let player = room.players[id];
+
+    switch (direction) {
+      case moves.DOWN:
+        y++;
+        break;
+      case moves.UP:
+        y--;
+        break;
+      case moves.LEFT:
+        x--;
+        break;
+      case moves.RIGHT:
+        x++;
+        break;
+      default: break;
+    }
+    
+    if (!this.inBound(room, { x, y })) return { err: true };
+    
+    this.killPlayers(room, { px, py, x: x, y: y, id });
+    
+    if (!this.freeSpace(room, { x, y })) return { err: true };
+
+    
+    room.entities.push(this.newEntity({
+      x, y,
+      type: types.WALL,
+      lifetime: blockLifetime * fps
+    }));
+
+
+    if ((x !== px || y !== py) && player.hidden) player.hidden = false;
+    
+    player.cooldown = typeCooldown[type];
+
+    return { x: px, y: py };
+  },
+
   passwallMove(room, { x: px, y: py, direction, id, type, cooldown }) {
-    console.log('called');
+
     if (direction === undefined || !this.db.players[id] || !room ||
       type !== types.SQUARE || cooldown !== 0) return { err: true };
     

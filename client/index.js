@@ -17,7 +17,8 @@ const moves = {
   LEFT: 3,
   RIGHT: 4,
   DASH: 5,
-  PASSWALL: 6
+  PASSWALL: 6,
+  BLOCK: 7
 };
 
 const specialMoves = [
@@ -26,9 +27,21 @@ const specialMoves = [
   null,
   moves.DASH,
   moves.PASSWALL,
-  null,
+  moves.BLOCK,
   null
 ];
+
+const themeColor = [
+  null,
+  null,
+  '#3498db',
+  '#f1c40f',
+  '#e67e22',
+  '#e74c3c',
+  null
+]
+
+const maxOffset = 5;
 
 const fps = 60;
 
@@ -39,34 +52,63 @@ let c, ctx;
 let type, specialMove;
 let state = {};
 
+function drawEqTriangle(cx, cy, offset){
+  let h = (cellWidth-2*offset)/Math.sqrt(2);
+      
+  ctx.fillStyle = '#f1c40f';
+  
+  ctx.translate(cx, cy);
+  ctx.rotate(Math.PI * offset/maxOffset);
+  
+  ctx.translate(-(h / 2), -(h / 2));
+  ctx.fillRect(0,0, h, h);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+}
+
 function draw(e) {
   let o = e.offset.x;
+  let x = e.x;
+  let y = e.y;
   switch(e.type) {
     case types.WALL:
-      ctx.fillStyle = '#2c3e50';
-      ctx.fillRect(e.x*cellWidth+o, e.y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
+      ctx.fillStyle = '#34495e';
+      ctx.fillRect(x*cellWidth+o, y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
       break;
     case types.HEXAGON:
       ctx.fillStyle = '#3498db';
-      ctx.fillRect(e.x*cellWidth+o, e.y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
+      ctx.fillRect(x*cellWidth+o, y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
       break;
     case types.TRIANGLE:
-      ctx.fillStyle = '#f1c40f';
-      ctx.fillRect(e.x*cellWidth+o, e.y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
+      drawEqTriangle(x*cellWidth+cellWidth/2, y*cellWidth+cellWidth/2, o);
       break;
     case types.SQUARE:
       ctx.fillStyle = '#e67e22';
-      ctx.fillRect(e.x*cellWidth+o, e.y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
+      ctx.fillRect(x*cellWidth+o, y*cellWidth+o, cellWidth-2*o, cellWidth-2*o);
+      break;
+    case types.CIRCLE:
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath();
+      ctx.arc(x*cellWidth+cellWidth/2,y*cellWidth+cellWidth/2,cellWidth/2-o,0,2*Math.PI);
+      ctx.fill();
+      ctx.closePath();
       break;
     case types.TRACE:
       ctx.fillStyle = '#f1c40f';
       ctx.beginPath();
-      ctx.arc(e.x*cellWidth+cellWidth/2,e.y*cellWidth+cellWidth/2,cellWidth*(Math.abs(e.lifetime)/fps),0,2*Math.PI);
+      ctx.arc(x*cellWidth+cellWidth/2,y*cellWidth+cellWidth/2,cellWidth*(Math.abs(e.lifetime)/fps),0,2*Math.PI);
       ctx.fill();
+      ctx.closePath();
     default: break;
   }
 }
 
+function background() {
+  // ctx.fillStyle = "#2c3e50";
+  // ctx.fillRect(0,0,c.width,c.height);
+
+  ctx.clearRect(0, 0, c.width, c.height);
+}
 
 function main() {
   c = document.getElementById('main');
@@ -74,8 +116,8 @@ function main() {
   c.height = 1000;
   ctx = c.getContext('2d');
 
-  ctx.clearRect(0, 0, c.width, c.height);
-  ctx.font="50px Georgia";
+  background();
+  ctx.font="50px Raleway";
   ctx.fillText("Join a room", c.width/2-100, c.height/2-25);
 
   primus = Primus.connect('ws://192.168.1.2:8080');
@@ -87,13 +129,14 @@ function main() {
 
     if (data.cooldown !== state.cooldown) cooldownEl.innerHTML = data.cooldown+'';
     state = data;
-    ctx.clearRect(0, 0, c.width, c.height);
+
+    background();
     state.entities.forEach(draw);
   });
 
   primus.on('end', _ => {
-    ctx.clearRect(0, 0, c.width, c.height);
-    ctx.font="50px Georgia";
+    background();
+    ctx.font="50px Raleway";
     ctx.fillText("You are dead!!!", c.width/2-100, c.height/2-25);
   })
 
