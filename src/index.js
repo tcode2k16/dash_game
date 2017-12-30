@@ -41,6 +41,6 @@ setInterval(_ => {
 }, 1000/config.fps)
 
 
-server.listen(8080, function listening() {
+server.listen(config.port, function listening() {
   console.log('Listening on %d', server.address().port);
 });

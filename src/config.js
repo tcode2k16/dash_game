@@ -1,4 +1,5 @@
 module.exports = {
+  port: 8000,
   fps: 60,
   types: {
     WALL: 1,

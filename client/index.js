@@ -120,7 +120,7 @@ function main() {
   ctx.font="50px Raleway";
   ctx.fillText("Join a room", c.width/2-100, c.height/2-25);
 
-  primus = Primus.connect('ws://192.168.1.2:8080');
+  primus = Primus.connect('ws://163.47.11.104:8000');
   
   
   

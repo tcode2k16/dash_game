@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "backpack"
+    "start": "backpack",
+    "pro": "backpack build && forever start build/main.js"
   },
   "author": "",
   "license": "ISC",
