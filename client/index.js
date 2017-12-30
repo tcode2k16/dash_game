@@ -145,10 +145,10 @@ function main() {
   Mousetrap.bind('d', _ => primus.emit('makeMove', { move: moves.RIGHT }));
   Mousetrap.bind('s', _ => primus.emit('makeMove', { move: moves.DOWN }));
 
-  Mousetrap.bind('shift+a', _ => primus.emit('makeMove', { move: specialMove, direction: moves.LEFT }));
-  Mousetrap.bind('shift+w', _ => primus.emit('makeMove', { move: specialMove, direction: moves.UP }));
-  Mousetrap.bind('shift+d', _ => primus.emit('makeMove', { move: specialMove, direction: moves.RIGHT }));
-  Mousetrap.bind('shift+s', _ => primus.emit('makeMove', { move: specialMove, direction: moves.DOWN }));
+  Mousetrap.bind('A', _ => primus.emit('makeMove', { move: specialMove, direction: moves.LEFT }));
+  Mousetrap.bind('W', _ => primus.emit('makeMove', { move: specialMove, direction: moves.UP }));
+  Mousetrap.bind('D', _ => primus.emit('makeMove', { move: specialMove, direction: moves.RIGHT }));
+  Mousetrap.bind('S', _ => primus.emit('makeMove', { move: specialMove, direction: moves.DOWN }));
   joinEl.onclick = _ => {
     primus.end();
     primus.open();
