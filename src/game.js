@@ -39,8 +39,8 @@ const game = {
   newRoom(room) {
     if (this.db.rooms[room]) return;
 
-    // let map = maps[pickInt(0, maps.length)];
-    let map = maps[2];
+    let map = maps[pickInt(0, maps.length)];
+    // let map = maps[2];
     let walls = map.reduce((p, row, y) => {
       let r = row.reduce((c, e, x) => {
         if (e !== 1) return c;
