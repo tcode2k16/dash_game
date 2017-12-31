@@ -2,10 +2,10 @@
 
 PORT="2220"
 IP="139.59.241.127"
-PNAME=$1
+PNAME="dash_game"
 
 rm -r ../node_modules
-ssh -p $PORT node@$IP "rm -r ~/$PNAME"
-scp -r -P $PORT ../../$PNAME node@$IP:~/$PNAME
-ssh -p $PORT node@$IP "cd ~/$PNAME; npm install"
+ssh -p $PORT node@$IP "rm -r ~/projects/$PNAME"
+scp -r -P $PORT ../../$PNAME node@$IP:~/projects/$PNAME
+ssh -p $PORT node@$IP "cd ~/projects/$PNAME; npm install"
 cd ../; npm install
