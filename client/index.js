@@ -1,7 +1,7 @@
 
 
 window.onload = main;
-
+const debug = false;
 const types = {
   WALL: 1,
   HEXAGON: 2,
@@ -120,7 +120,7 @@ function main() {
   ctx.font="50px Raleway";
   ctx.fillText("Join a room", c.width/2-100, c.height/2-25);
 
-  primus = Primus.connect('ws://163.47.11.104:8000');
+  primus = Primus.connect(debug ? 'ws://192.168.1.2:8000' : 'ws://163.47.11.104:8000');
   
   
   
