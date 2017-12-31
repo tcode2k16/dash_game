@@ -29,5 +29,5 @@ module.exports = {
   },
   maxOffset: 5,
   dOffset: 0.05,
-  blockLifetime: 20
+  blockLifetime: 10
 }
